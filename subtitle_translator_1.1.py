@@ -202,56 +202,6 @@ def start_ffmpeg():
 
     print("❌ 未能成功初始化任何音频设备")
 
-def transcribe(audio_bytes):
-    try:
-        # 构造带 WAV 头的 PCM 数据
-        wav_data = (
-            b'RIFF' + (len(audio_bytes) + 36).to_bytes(4, 'little') + b'WAVEfmt ' +
-            (16).to_bytes(4, 'little') + (1).to_bytes(2, 'little') + (1).to_bytes(2, 'little') +
-            (16000).to_bytes(4, 'little') + (16000 * 2).to_bytes(4, 'little') +
-            (2).to_bytes(2, 'little') + (16).to_bytes(2, 'little') + b'data' +
-            len(audio_bytes).to_bytes(4, 'little') + audio_bytes
-        )
-
-        # 写入临时文件
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-            f.write(wav_data)
-            f.flush()
-
-            # 替换为你自己的 AppKey 和 Token
-            app_key = "填阿里的"
-            token = "填阿里的"
-
-            # 构建请求
-            url = "https://nls-gateway.cn-shanghai.aliyuncs.com/stream/v1/asr"
-            headers = {
-                "X-NLS-Token": token
-            }
-            params = {
-                "appkey": app_key,
-                "format": "wav",
-                "sample_rate": "16000",
-                "enable_punctuation_prediction": "true",
-                "enable_inverse_text_normalization": "true"
-            }
-
-            with open(f.name, 'rb') as audio_file:
-                response = requests.post(url, headers=headers, params=params, data=audio_file)
-
-            if response.status_code == 200:
-                result = response.json()
-                if result.get("status") == 20000000:
-                    return result.get("result", "")
-                else:
-                    logging.warning(f"阿里云返回异常: {result}")
-            else:
-                logging.warning(f"请求失败: HTTP {response.status_code}")
-
-    except Exception:
-        logging.exception("调用阿里云识别失败")
-
-    return ""
-
 def translate(text):
     try:
         url = "https://api.siliconflow.cn/v1/chat/completions"
