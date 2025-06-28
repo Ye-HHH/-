@@ -9,6 +9,7 @@ from dashscope.audio.asr import TranslationRecognizerRealtime, TranslationRecogn
 
 SUBTITLE_QUEUE = queue.Queue()
 
+
 def start_minimal_gui():
     selected_device = None
     try:
@@ -18,6 +19,7 @@ def start_minimal_gui():
             selected_device = selected_device.get()
     except Exception as e:
         print("[警告] 无法获取音频源选择，使用默认设备。", e)
+
     def gui():
         # 初始化 PyAudio 设备列表
         pa = pyaudio.PyAudio()
@@ -29,7 +31,7 @@ def start_minimal_gui():
         device_names = list(dict.fromkeys(raw_device_names))
         pa.terminate()
         root = tk.Tk()
-        root.title("Minimal Subtitles")
+        root.title("BabelStream")
         # 音频源下拉栏
         import json
         config_path = os.path.join(os.path.expanduser("~"), ".babelstream_gui_config.json")
@@ -56,10 +58,10 @@ def start_minimal_gui():
         except Exception as e:
             print("[提示] 无法获取系统默认设备，使用第一个音频源。", e)
         device_var = tk.StringVar(root, value=config.get("device_name", device_names[default_index]))
-        
 
         if device_names:
             device_var.set(device_names[default_index])
+
         def on_device_change(*args):
             selected = device_var.get()
             print(f"[设备切换] 当前选择：{selected}")
@@ -77,12 +79,14 @@ def start_minimal_gui():
         def build_dropdown(label_text, variable, options):
             container = tk.Frame(settings_frame, bg="black")
             btn = tk.Menubutton(container, text=label_text, font=("Microsoft YaHei", 12), fg="white", bg="black",
-                                 relief="raised")
+                                relief="raised")
             menu = tk.Menu(btn, tearoff=0, font=("Microsoft YaHei", 12))
+
             def update_menu():
                 menu.delete(0, 'end')
                 for opt in options:
                     menu.add_radiobutton(label=opt, variable=variable, value=opt)
+
             update_menu()
             variable.trace_add("write", lambda *args: update_menu())
             btn.config(menu=menu, direction="flush")
@@ -94,11 +98,13 @@ def start_minimal_gui():
         # 字体大小选择器
         import json
         config_path = os.path.join(os.path.expanduser("~"), ".babelstream_gui_config.json")
+
         def load_config():
             if os.path.exists(config_path):
                 with open(config_path, "r", encoding="utf-8") as f:
                     return json.load(f)
             return {}
+
         def save_config(data):
             with open(config_path, "w", encoding="utf-8") as f:
                 json.dump(data, f)
@@ -124,9 +130,10 @@ def start_minimal_gui():
         def save_font(*args):
             config["font_size"] = font_var.get()
             save_config(config)
+
         font_var.trace_add("write", on_font_change)
         font_var.trace_add("write", save_font)
-        
+
         build_dropdown("字体大小", font_var, list(font_sizes.keys()))
         root.configure(bg="black")
         root.geometry("1600x200+160+800")
@@ -210,6 +217,7 @@ def start_minimal_gui():
 
 dashscope.api_key = os.getenv("DASHSCOPE_API_KEY", "<your-api-key>")
 
+
 class GuiSubtitleCallback(TranslationRecognizerCallback):
     def on_open(self):
         print("[DashScope] 连接已打开")
@@ -235,9 +243,11 @@ class GuiSubtitleCallback(TranslationRecognizerCallback):
     def on_close(self):
         print("[DashScope] 连接已关闭")
 
+
 recognizer_instance = None
 stream_instance = None
 pa_instance = None
+
 
 def start_dashscope_stream(device_name=None):
     global recognizer_instance, stream_instance, pa_instance
@@ -246,18 +256,21 @@ def start_dashscope_stream(device_name=None):
     if recognizer_instance:
         try:
             recognizer_instance.stop()
-        except: pass
+        except:
+            pass
         recognizer_instance = None
     if stream_instance:
         try:
             stream_instance.stop_stream()
             stream_instance.close()
-        except: pass
+        except:
+            pass
         stream_instance = None
     if pa_instance:
         try:
             pa_instance.terminate()
-        except: pass
+        except:
+            pass
         pa_instance = None
 
     recognizer = TranslationRecognizerRealtime(
